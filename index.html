@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nanoAstra: Training VLMs as Foundation Models for Robotic Manipulation</title>
+  <meta name="description" content="nanoAstra trains a vision-language model for generalizable robot manipulation with semantic action modeling and capability-preserving supervised fine-tuning (CP-SFT).">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="A Glimpse of Training VLMs as Foundation Models for Robotic Manipulation">
+  <meta property="og:description" content="nanoAstra: semantic action modeling + CP-SFT. 17.8% zero-shot success on RoboTwin 2.0 (randomized), with streaming execution that cuts robot idle time from 35.0% to 6.9%.">
+  <meta property="og:url" content="https://nanoastra.github.io/">
+  <meta property="og:image" content="https://nanoastra.github.io/static/images/teaser.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f4e8c'/%3E%3Ccircle cx='9' cy='20' r='3' fill='%23dce8f7'/%3E%3Ccircle cx='16' cy='13' r='3' fill='%23fbe8c6'/%3E%3Ccircle cx='23' cy='20' r='3' fill='%23dce8f7'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/style.css?v=15">
+</head>
+<body>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">nano<span>Astra</span></a>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#efficiency">Efficiency</a></li>
+      <li><a href="#retention">Retention</a></li>
+      <li><a href="#failures">Failures</a></li>
+      <li><a href="#bibtex">BibTeX</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <h1>A Glimpse of Training VLMs as Foundation Models for Robotic Manipulation</h1>
+    <p class="method-name">nanoAstra</p>
+
+    <div class="authors">
+      <span>Meng-Hao Guo<sup>1,*,†</sup></span>
+      <span>Yi Zhang<sup>1,*</sup></span>
+      <span>Zhe-Han Mo<sup>1,*</sup></span>
+      <span>Han-Zheng Wang<sup>1,*</sup></span>
+      <span>Jia-Jun Wang<sup>1,*</sup></span>
+      <span>Xin-Sheng Chen<sup>1,*</sup></span>
+      <span>Jiaxi Song<sup>1</sup></span>
+      <span>Yi-Xuan Deng<sup>1</sup></span>
+      <span>Jia-Ning Li<sup>1</sup></span>
+      <span>Xuanyu Chu<sup>1</sup></span>
+      <span>Hengrui Zhang<sup>1</sup></span>
+      <span>Huan-ang Gao<sup>1</sup></span>
+      <span>Yongming Rao<sup>2</sup></span>
+      <span>Shi-Min Hu<sup>1,✉</sup></span>
+    </div>
+    <div class="affils">
+      <span><sup>1</sup>Tsinghua University</span>
+      <span><sup>2</sup>Tencent Hunyuan</span>
+    </div>
+    <div class="roles">
+      <span><sup>*</sup>Core Contributors</span>
+      <span><sup>†</sup>Project Lead</span>
+      <span><sup>✉</sup>Corresponding Author</span>
+    </div>
+
+    <div class="buttons">
+      <a class="btn" href="https://arxiv.org/pdf/2611.29338" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 1.8L18.2 8H14V3.8zM8 12h8v1.6H8V12zm0 3.4h8V17H8v-1.6zm0-6.8h4v1.6H8V8.6z"/></svg>
+        Paper
+      </a>
+      <a class="btn" href="https://arxiv.org/abs/2611.29338" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 1.8a8.2 8.2 0 0 1 0 16.4 8.2 8.2 0 0 1 0-16.4zM11 7v2h2V7h-2zm0 4v6h2v-6h-2z"/></svg>
+        arXiv
+      </a>
+      <a class="btn" href="https://github.com/Hugo-AGI/nanoAstra" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.7 16.6 4.1 12l4.6-4.6L7.3 6 1.3 12l6 6 1.4-1.4zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6-1.4-1.4z"/></svg>
+        Code
+      </a>
+      <a class="btn" href="https://huggingface.co/Hugo-AGI/nanoAstra" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44a1 1 0 0 1-1.14 0l-7.9-4.44A1 1 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44a1 1 0 0 1 1.14 0l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15 6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"/></svg>
+        Model
+      </a>
+      <a class="btn" href="#bibtex">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12a2 2 0 0 1 2 2v18l-8-4-8 4V4a2 2 0 0 1 2-2z"/></svg>
+        BibTeX
+      </a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== Overview ===================== -->
+  <section id="overview">
+    <div class="wrap">
+      <div class="teaser-grid">
+        <figure>
+          <a class="zoom" href="static/images/teaser.jpg" target="_blank" rel="noopener">
+            <img src="static/images/teaser.jpg" width="2602" height="2601" alt="Comparison of VLA, WAM, and nanoAstra. VLA and WAM predict dense control steps; nanoAstra predicts semantic steps made of a progress description and executable actions such as move x +5.0, move z -2.0.">
+          </a>
+        </figure>
+        <div>
+          <p class="tldr">We train a VLM to act by <b>writing text</b>: at each decision point it states the task <b>progress</b> and the next <b>semantic steps</b>, such as <code>move x +5.0</code> or <code>gripper open</code>. The model generates them as ordinary text, with no separate action head.</p>
+          <div class="stats">
+            <div class="stat hl">
+              <div class="num">17.8<small>%</small></div>
+              <div class="lbl">zero-shot success on RoboTwin 2.0 (randomized, 50 tasks); best evaluated VLA 10.8%</div>
+            </div>
+            <div class="stat">
+              <div class="num">5,310<small>h</small></div>
+              <div class="lbl">of real robot and hand-held gripper data, 818K episodes, 14.9M training samples</div>
+            </div>
+            <div class="stat">
+              <div class="num">0.64</div>
+              <div class="lbl">inference-to-motion ratio on a single H20: inference is shorter than the motion it produces</div>
+            </div>
+            <div class="stat">
+              <div class="num">35.0<small>%</small><span class="arrow">→</span>6.9<small>%</small></div>
+              <div class="lbl">robot idle time with streaming execution instead of blocking</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Abstract ===================== -->
+  <section id="abstract">
+    <div class="wrap prose abstract">
+      <h2>Abstract</h2>
+      <p>Recently, GPT-6 Astra demonstrates strong generalization in robot control, yet limited disclosure of its training leaves open how such capabilities can be reproduced. We introduce <em class="k">nanoAstra</em>, an approach to training vision-language models (VLMs) for generalizable manipulation that combines semantic action modeling with capability-preserving supervised fine-tuning (CP-SFT). nanoAstra represents robot behavior as semantic steps composed of reusable, parameterized action primitives, guided by explicit progress descriptions. Meanwhile, CP-SFT uses an explicit robot-specific system prompt to constrain manipulation outputs to a structured action space, aiming to focus adaptation on robot-specific contexts and promote specialization while minimizing interference with broader pretrained capabilities. With this formulation, we train nanoAstra on more than 5,000 hours of robot data together with general VQA data. On RoboTwin 2.0's randomized benchmark, nanoAstra-9B achieves a 17.8% zero-shot success rate, substantially outperforming advanced VLA and WAM baselines as well as similarly sized VLMs. With inference faster than the corresponding motion execution on a single H20 GPU, our model supports action-chunk-like streaming execution that overlaps inference with motion, reducing the robot's idle time from 35.0% to 6.9%.</p>
+    </div>
+  </section>
+
+  <!-- ===================== Method ===================== -->
+  <section id="method">
+    <div class="wrap">
+      <h2>Method</h2>
+      <div class="prose">
+        <p class="lead">Most VLA and WAM policies predict action chunks made of densely sampled <em class="k">control steps</em>. These targets are physically well defined, but they do not mark where one coherent motion ends and the next begins. nanoAstra reorganizes robot experience into <em class="k">semantic steps</em> and adapts the VLM so that it keeps its general capabilities.</p>
+      </div>
+
+      <div class="pillars">
+        <div class="pillar">
+          <div class="tag">Design 1</div>
+          <h4>Semantic action modeling</h4>
+          <p>Demonstrations are cut at behavioral decision points: gripper transitions, pauses, sharp turns, and large wrist rotations. Each interval becomes a step of reusable, parameterized primitives for translation, rotation, gripper control, and waiting. Each step is paired with a dense progress description that states its local goal.</p>
+        </div>
+        <div class="pillar">
+          <div class="tag">Design 2</div>
+          <h4>Capability-preserving SFT</h4>
+          <p>A robot-specific system prompt defines the embodiment, coordinate conventions, and action vocabulary, which softly confines manipulation outputs to a structured response space. Joint training on general VQA data and a digit-weighted numerical loss complete the recipe.</p>
+        </div>
+      </div>
+
+      <h3>Data pipeline</h3>
+      <p>Data from ABC-130K, AgiBot, HiFi-UMI, and HY-UMI passes through five stages: filtering, convention and camera alignment, subtask segmentation with dense captions, semantic step construction, and mixing with general vision-language data.</p>
+      <figure>
+        <a class="zoom" href="static/images/method.jpg" target="_blank" rel="noopener">
+          <img src="static/images/method.jpg" width="2592" height="1075" loading="lazy" alt="Five-stage data pipeline: data filtering, convention alignment, subtask segmentation, semantic step construction, and data mixing, with an example of an observation paired with a structured target.">
+        </a>
+        <figcaption><b>Data pipeline.</b> Heterogeneous demonstrations are filtered, geometrically standardized, segmented into subtasks, and converted into semantic steps before being mixed with general vision-language data. Observations at behavioral decision points are paired with progress descriptions and executable action primitives.</figcaption>
+      </figure>
+
+      <div class="example">
+        <div class="panel">
+          <h5>Model input at a decision point</h5>
+          <ul>
+            <li>Robot system prompt: embodiment, coordinate conventions, action vocabulary, response format</li>
+            <li>Camera image(s)</li>
+            <li>Robot state (positions in cm, rotations in degrees, gripper in [0, 1])</li>
+            <li>Task instruction and interaction history</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h5>Structured response (illustrative)</h5>
+<pre><span class="key">progress</span>: <span class="str">"Move the mug to the tray."</span>
+<span class="key">steps</span>:
+  - <span class="key">left_arm</span>:  [move x +5.0, move z -2.0]
+    <span class="key">right_arm</span>: [wait]
+  - <span class="key">left_arm</span>:  [wait]
+    <span class="key">right_arm</span>: [gripper close, move x +2]
+<span class="cmt"># commands within one arm form a combined motion;</span>
+<span class="cmt"># the two arms execute concurrently</span></pre>
+        </div>
+      </div>
+
+      <h3>Camera re-calibration</h3>
+      <p>Robot states and action targets live in the robot-base or scene frame, while the model sees the scene through images, so the camera extrinsics have to be right. Where extrinsics are missing or inaccurate, we re-calibrate the main camera so that projected end-effector positions land on the visible grippers.</p>
+      <figure class="fig-mid">
+        <a class="zoom" href="static/images/calib.jpg" target="_blank" rel="noopener">
+          <img src="static/images/calib.jpg" width="2592" height="1156" loading="lazy" alt="Before and after camera re-calibration: projected arm masks and end-effector points are offset from the arms with the original extrinsics and align after re-calibration.">
+        </a>
+        <figcaption><b>Camera re-calibration.</b> Left: with the original extrinsics, the projected arm masks and end-effector points are offset from the arms (red segments connect each projected point to the actual end effector). Right: after re-calibration they align more closely.</figcaption>
+      </figure>
+
+      <h3>Training data</h3>
+      <p>After processing, we keep 5,310.5 hours of manipulation data (about 818K episodes) and mix it with 1.55M general vision-language examples from Honey-Data-V2. The mixture contains about 3.65B trainable tokens: 62.7% from robot data and 37.3% from general vision-language data.</p>
+      <figure>
+        <a class="zoom" href="static/images/data_composition.png" target="_blank" rel="noopener">
+          <img src="static/images/data_composition.png" width="2599" height="905" loading="lazy" alt="Training data composition: trainable tokens per source and a table of episodes, hours, samples, and tokens.">
+        </a>
+        <figcaption><b>Training data composition.</b> (a) Trainable tokens across robot and general vision-language data. (b) Episodes, hours, training samples, and trainable tokens per source.</figcaption>
+      </figure>
+
+      <h3>CP-SFT: a softly constrained response space</h3>
+      <div class="two-col">
+        <figure>
+          <a class="zoom" href="static/images/cpsft.png" target="_blank" rel="noopener">
+            <img src="static/images/cpsft.png" width="1260" height="973" loading="lazy" alt="With the robot system prompt the VLM answers in structured executable text; without it, the same VLM answers in free-form language.">
+          </a>
+        </figure>
+        <div>
+          <p>With the robot system prompt, the VLM predicts task progress and executable semantic steps. Without the prompt, the same model answers general questions in free-form language. Keeping manipulation supervision inside this context-conditioned space is meant to limit changes to the model's output distribution outside robotic contexts.</p>
+          <p>To improve numerical precision in actions, cross-entropy is supplemented with a modified <em class="k">Wasserstein Number Token Loss</em>. It weights each digit by its decimal place, so significant digits matter more, and adds explicit supervision of the sign. Losses are averaged over original samples across packing, GPUs, and gradient accumulation, so every sample carries equal weight.</p>
+          <p>nanoAstra-9B is initialized from Qwen3.5-9B and fully fine-tuned for one epoch.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Results ===================== -->
+  <section id="results">
+    <div class="wrap">
+      <h2>Zero-Shot Manipulation on RoboTwin 2.0</h2>
+      <div class="prose">
+        <p>nanoAstra is trained only on real-world manipulation data, with no simulated trajectories, RoboTwin demonstrations, or benchmark-specific fine-tuning. We evaluate on 50 tasks in the randomized setting and average over 10 runs per task. The model runs in closed loop: each turn takes the current observation and returns the current progress and the steps to execute.</p>
+      </div>
+
+      <div class="sr-head">
+        <a class="sr-big ours" href="episodes/" title="Replay every episode"><span class="v">17.8<small>%</small></span><span class="l">nanoAstra-9B</span><span class="sr-replay"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Replay all episodes</span></a>
+        <div class="sr-vs">vs</div>
+        <div class="sr-big" title="LingBot-VLA-2.0 and Qwen3.8-27B with thinking"><span class="v">10.8<small>%</small></span><span class="l">best baseline</span></div>
+        <div class="sr-gain"><span class="v">+7.0</span><span class="l">points<br>(1.6×)</span></div>
+      </div>
+
+      <div class="sr-chart" role="list" aria-label="Zero-shot success rate on RoboTwin 2.0, grouped by model family">
+        <div class="sr-ref" style="--xf:0.491" aria-hidden="true"><span>best baseline 10.8</span></div>
+        <div class="sr-row ours" role="listitem" title="nanoAstra-9B (ours), no thinking: 17.8%">
+          <div class="sr-name">nanoAstra-9B (ours)</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:80.9%"></div><span class="sr-val" style="left:80.9%">17.8</span></div>
+        </div>
+        <div class="sr-group" role="presentation"><span>VLA</span></div>
+        <div class="sr-row" role="listitem" title="LingBot-VLA-2.0 (VLA): 10.8%">
+          <div class="sr-name">LingBot-VLA-2.0</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:49.1%"></div><span class="sr-val" style="left:49.1%">10.8</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="DM0.5 (VLA): 2.4%">
+          <div class="sr-name">DM0.5</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:10.9%"></div><span class="sr-val" style="left:10.9%">2.4</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="Xiaomi-Robotics-1 (VLA): 2.0%">
+          <div class="sr-name">Xiaomi-Robotics-1</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:9.1%"></div><span class="sr-val" style="left:9.1%">2.0</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="π0.5 (VLA): 1.4%">
+          <div class="sr-name">π<sub>0.5</sub></div>
+          <div class="sr-bar"><div class="sr-fill" style="width:6.4%"></div><span class="sr-val" style="left:6.4%">1.4</span></div>
+        </div>
+        <div class="sr-group" role="presentation"><span>World-action models (WAM)</span></div>
+        <div class="sr-row" role="listitem" title="DreamZero (World-action models (WAM)): 0.2%">
+          <div class="sr-name">DreamZero</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:0.9%"></div><span class="sr-val" style="left:0.9%">0.2</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="LingBot-VA (World-action models (WAM)): 0.0%">
+          <div class="sr-name">LingBot-VA</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:0.0%"></div><span class="sr-val" style="left:0.0%">0.0</span></div>
+        </div>
+        <div class="sr-group" role="presentation"><span>VLMs with thinking</span></div>
+        <div class="sr-row" role="listitem" title="Qwen3.8-27B (VLMs with thinking): 10.8%">
+          <div class="sr-name">Qwen3.8-27B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:49.1%"></div><span class="sr-val" style="left:49.1%">10.8</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="Qwen3.5-35B-A3B (VLMs with thinking): 9.0%">
+          <div class="sr-name">Qwen3.5-35B-A3B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:40.9%"></div><span class="sr-val" style="left:40.9%">9.0</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="Qwen3.5-397B-A17B (VLMs with thinking): 9.0%">
+          <div class="sr-name">Qwen3.5-397B-A17B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:40.9%"></div><span class="sr-val" style="left:40.9%">9.0</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="Qwen3.5-9B (VLMs with thinking): 8.2%">
+          <div class="sr-name">Qwen3.5-9B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:37.3%"></div><span class="sr-val" style="left:37.3%">8.2</span></div>
+        </div>
+        <div class="sr-group" role="presentation"><span>VLMs without thinking</span></div>
+        <div class="sr-row" role="listitem" title="Qwen3.5-397B-A17B (VLMs without thinking): 4.0%">
+          <div class="sr-name">Qwen3.5-397B-A17B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:18.2%"></div><span class="sr-val" style="left:18.2%">4.0</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="Qwen3.8-27B (VLMs without thinking): 3.6%">
+          <div class="sr-name">Qwen3.8-27B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:16.4%"></div><span class="sr-val" style="left:16.4%">3.6</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="Qwen3.5-35B-A3B (VLMs without thinking): 3.4%">
+          <div class="sr-name">Qwen3.5-35B-A3B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:15.5%"></div><span class="sr-val" style="left:15.5%">3.4</span></div>
+        </div>
+        <div class="sr-row" role="listitem" title="Qwen3.5-9B (VLMs without thinking): 3.2%">
+          <div class="sr-name">Qwen3.5-9B</div>
+          <div class="sr-bar"><div class="sr-fill" style="width:14.5%"></div><span class="sr-val" style="left:14.5%">3.2</span></div>
+        </div>
+        <div class="sr-axis" aria-hidden="true"><span style="left:0">0</span><span style="left:22.7%">5</span><span style="left:45.5%">10</span><span style="left:68.2%">15</span><span style="left:90.9%">20</span></div>
+      </div>
+      <p class="sr-note">Success rate (%) on 50 RoboTwin 2.0 tasks under the zero-shot randomized protocol, 10 runs per task. Baselines in gray; “with thinking” means the model reasons before answering. The dashed line marks the best baseline.</p>
+
+      <div class="prose" style="margin-top:18px">
+        <p>Thinking helps every evaluated Qwen model (3.2–4.0% → 8.2–10.8%), but it spends extra reasoning tokens before any action is produced. Without thinking, nanoAstra-9B reaches 17.8%: 14.6 points above Qwen3.5-9B without thinking, 9.6 points above it with thinking, and above the larger Qwen models as well.</p>
+        <p class="replay-line">We release every evaluation episode of nanoAstra-9B, with the images and text it received and its reply at each turn.
+          <a class="replay-cta" href="episodes/">Replay the episodes <span aria-hidden="true">→</span></a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Efficiency ===================== -->
+  <section id="efficiency">
+    <div class="wrap">
+      <h2>Inference Efficiency and Streaming Execution</h2>
+      <div class="prose">
+        <p>We compare inference latency with the duration of the motion that each prediction produces. <em class="k">I/M</em> is the inference-to-motion ratio: below 1, inference can be hidden behind execution.</p>
+      </div>
+
+      <div class="table-wrap" style="max-width:760px">
+        <table>
+          <caption>All measurements use a single RTX 4090 except the row marked <b>†</b>, which uses a single H20. cmds = commands.</caption>
+          <thead>
+            <tr><th>Model</th><th class="num">Infer.</th><th class="num">Actions</th><th class="num">Motion</th><th class="num">I/M ↓</th></tr>
+          </thead>
+          <tbody>
+            <tr class="group"><td colspan="5">VLA</td></tr>
+            <tr><td>π<sub>0.5</sub></td><td class="num">101 ms</td><td class="num">45.0 steps</td><td class="num">2.70 s</td><td class="num">0.037</td></tr>
+            <tr><td>StarVLA</td><td class="num">70 ms</td><td class="num">16.0 steps</td><td class="num">0.96 s</td><td class="num">0.073</td></tr>
+            <tr><td>X-VLA</td><td class="num">143 ms</td><td class="num">28.6 steps</td><td class="num">1.71 s</td><td class="num">0.084</td></tr>
+            <tr class="group"><td colspan="5">World-action models</td></tr>
+            <tr><td>Fast-WAM</td><td class="num">523 ms</td><td class="num">27.3 steps</td><td class="num">1.64 s</td><td class="num">0.32</td></tr>
+            <tr><td>Motus</td><td class="num">1.93 s</td><td class="num">16.0 steps</td><td class="num">0.96 s</td><td class="num">2.01</td></tr>
+            <tr><td>LingBot-VA</td><td class="num">8.89 s</td><td class="num">22.2 steps</td><td class="num">1.33 s</td><td class="num">6.67</td></tr>
+            <tr class="group"><td colspan="5">VLM-based</td></tr>
+            <tr><td>Qwen3.5-9B w/ thinking</td><td class="num">60.7 s</td><td class="num">1.6 cmds</td><td class="num">1.42 s</td><td class="num">42.8</td></tr>
+            <tr><td>nanoAstra</td><td class="num">3.89 s</td><td class="num">3.5 cmds</td><td class="num">2.87 s</td><td class="num">1.36</td></tr>
+            <tr class="ours"><td>nanoAstra <span class="dagger">†</span></td><td class="num">1.69 s</td><td class="num">3.5 cmds</td><td class="num">2.66 s</td><td class="num">0.64</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Streaming execution</h3>
+      <p>On a single H20, a reply is written faster than the robot can carry it out, so the two can overlap. Steps run in order as soon as they are written; when at most two are left, a new snapshot goes to the model, and those steps are prefilled as the start of its next reply.</p>
+      <figure class="sf" aria-label="Streaming execution, replayed episodes">
+        <div class="sf-pick">
+          <button class="vthumb" type="button" aria-pressed="true" data-ep="place_cans_plasticbox_ep2"><img src="static/streaming/place_cans_plasticbox_ep2-thumb.jpg" width="360" height="270" alt=""><span class="vname">Two cans into a box</span><span class="vtime">done in 14.6 s</span></button>
+          <button class="vthumb" type="button" aria-pressed="false" data-ep="move_pillbottle_pad_ep2"><img src="static/streaming/move_pillbottle_pad_ep2-thumb.jpg" width="360" height="270" loading="lazy" alt=""><span class="vname">Pill bottle onto a pad</span><span class="vtime">done in 6.5 s</span></button>
+          <button class="vthumb" type="button" aria-pressed="false" data-ep="place_empty_cup_ep0"><img src="static/streaming/place_empty_cup_ep0-thumb.jpg" width="360" height="270" loading="lazy" alt=""><span class="vname">Cup onto a coaster</span><span class="vtime">done in 7.2 s</span></button>
+          <button class="vthumb" type="button" aria-pressed="false" data-ep="place_container_plate_ep3"><img src="static/streaming/place_container_plate_ep3-thumb.jpg" width="360" height="270" loading="lazy" alt=""><span class="vname">Bowl onto a plate</span><span class="vtime">done in 6.1 s</span></button>
+          <button class="vthumb" type="button" aria-pressed="false" data-ep="stack_bowls_two_ep3"><img src="static/streaming/stack_bowls_two_ep3-thumb.jpg" width="360" height="270" loading="lazy" alt=""><span class="vname">Stack two bowls</span><span class="vtime">done in 18.7 s</span></button>
+        </div>
+        <figcaption><b>Replayed evaluation episodes</b>, in simulated time with single-H20 latency.</figcaption>
+      </figure>
+      <div class="table-wrap" style="max-width:620px">
+        <table>
+          <caption>Blocking vs. streaming on RoboTwin 2.0, with the simulator kept running during inference as on a real robot (5 runs per task). <b>Wait</b>: waiting per turn, in step durations (0.8 s on average). <b>Idle</b>: share of time spent waiting.</caption>
+          <thead>
+            <tr><th>Execution</th><th class="num">SR (%)</th><th class="num">Wait ↓</th><th class="num">Idle ↓</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Blocking</td><td class="num">11.2</td><td class="num">2.1 steps</td><td class="num">35.0%</td></tr>
+            <tr class="ours"><td>Streaming</td><td class="num">12.9</td><td class="num">0.2 steps</td><td class="num">6.9%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== Retention ===================== -->
+  <section id="retention">
+    <div class="wrap">
+      <h2>Vision-Language Capability Retention</h2>
+      <div class="prose">
+        <p>We track the training loss and general benchmark accuracy (MMMU, ERQA, CV-Bench) throughout training. VQA accuracy dips early, then recovers and stabilizes instead of degrading steadily. CV-Bench-2D nearly returns to its initial level, and the other benchmarks keep most of their initial accuracy. Some degradation remains, and we expect broader VQA co-training data to reduce it further.</p>
+      </div>
+      <figure>
+        <a class="zoom" href="static/images/training_curves.png" target="_blank" rel="noopener">
+          <img src="static/images/training_curves.png" width="2586" height="521" loading="lazy" alt="Training loss and MMMU, ERQA, CV-Bench-2D, CV-Bench-3D accuracy over training steps, with step-0 reference lines.">
+        </a>
+        <figcaption><b>Training loss and benchmark accuracy over training.</b> Dashed lines mark the accuracy at step 0.</figcaption>
+      </figure>
+      <div class="table-wrap" style="max-width:620px">
+        <table>
+          <thead>
+            <tr><th>Benchmark</th><th class="num">Step 0</th><th class="num">Final</th><th class="num">Change</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>MMMU</td><td class="num">58.6</td><td class="num">53.1</td><td class="num">−5.5</td></tr>
+            <tr><td>ERQA</td><td class="num">47.3</td><td class="num">41.0</td><td class="num">−6.3</td></tr>
+            <tr><td>CV-Bench-2D</td><td class="num">82.2</td><td class="num">81.6</td><td class="num">−0.6</td></tr>
+            <tr><td>CV-Bench-3D</td><td class="num">92.6</td><td class="num">87.6</td><td class="num">−5.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Failures ===================== -->
+  <section id="failures">
+    <div class="wrap">
+      <h2>Failure Analysis</h2>
+      <div class="prose">
+        <p>Both cases make substantial progress before running out of turns. In (a), the predicted progress follows the grasp–open–release cycle of the microwave door, but each opening step is a straight-line translation, so the door only opens partway. In (b), the can goes into the basket early, but the progress later returns to the completed subtask and then drifts to a distractor shoe, so the basket is never lifted. Object-centric primitives for articulated objects and explicit tracking of completed subtasks are natural next steps.</p>
+      </div>
+      <figure>
+        <a class="zoom" href="static/images/failure_cases.jpg" target="_blank" rel="noopener">
+          <img src="static/images/failure_cases.jpg" width="2594" height="1402" loading="lazy" alt="Two failure cases on RoboTwin 2.0: a microwave door opened only partially, and progress drifting to a distractor after the can is placed in the basket.">
+        </a>
+        <figcaption><b>Failure cases on RoboTwin 2.0.</b> Each frame shows the decision turn and the predicted progress.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== BibTeX ===================== -->
+  <section id="bibtex">
+    <div class="wrap">
+      <h2>BibTeX</h2>
+      <div class="bib">
+        <button class="copy" type="button" data-copy="bibtex-code">Copy</button>
+<pre id="bibtex-code">@article{guo2026glimpse,
+  title   = {A Glimpse of Training VLMs as Foundation Models for Robotic Manipulation},
+  author  = {Guo, Meng-Hao and Zhang, Yi and Mo, Zhe-Han and Wang, Han-Zheng and
+             Wang, Jia-Jun and Chen, Xin-Sheng and Song, Jiaxi and Deng, Yi-Xuan and
+             Li, Jia-Ning and Chu, Xuanyu and Zhang, Hengrui and Gao, Huan-ang and
+             Rao, Yongming and Hu, Shi-Min},
+  journal = {arXiv preprint arXiv:2611.29338},
+  year    = {2026}
+}</pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="static/streaming.js?v=2f32c871"></script>
+<script>
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = document.getElementById(btn.dataset.copy).textContent;
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done, function () {});
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+</script>
+</body>
+</html>

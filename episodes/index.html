@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>nanoAstra · RoboTwin 2.0 Episodes</title>
+  <meta name="description" content="Every episode of nanoAstra-9B in the RoboTwin 2.0 evaluation of the paper: the images and text sent to the model each turn, its replies, and the recording.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f4e8c'/%3E%3Ccircle cx='9' cy='20' r='3' fill='%23dce8f7'/%3E%3Ccircle cx='16' cy='13' r='3' fill='%23fbe8c6'/%3E%3Ccircle cx='23' cy='20' r='3' fill='%23dce8f7'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://huggingface.co" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="../static/style.css?v=15">
+  <link rel="stylesheet" href="../static/episodes.css?v=5">
+</head>
+<body>
+
+<nav class="nav" aria-label="Links">
+  <div class="wrap">
+    <a class="brand" href="../">nano<span>Astra</span></a>
+    <ul>
+      <li><a href="../">Project page</a></li>
+      <li><a href="https://arxiv.org/abs/2611.29338" target="_blank" rel="noopener">Paper</a></li>
+      <li><a href="https://github.com/Hugo-AGI/nanoAstra" target="_blank" rel="noopener">Code</a></li>
+      <li><a href="https://huggingface.co/Hugo-AGI/nanoAstra" target="_blank" rel="noopener">Model</a></li>
+      <li><a href="https://huggingface.co/datasets/Hugo-AGI/nanoAstra-RoboTwin-episodes" target="_blank" rel="noopener">Data</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="ep-top">
+    <div class="wrap">
+      <h2>RoboTwin 2.0 Episodes</h2>
+      <p class="ep-lede">Every episode of nanoAstra-9B in the paper's RoboTwin 2.0 evaluation (randomized setting, 50 tasks,
+        <b>17.8%</b> success): what the model was sent and what it replied, turn by turn.
+        <a href="https://huggingface.co/datasets/Hugo-AGI/nanoAstra-RoboTwin-episodes" target="_blank" rel="noopener">Download all episodes</a>.</p>
+
+      <div class="ep-view" id="episode" hidden>
+        <div class="ep-head">
+          <div class="ep-title"><h3></h3><span class="ep-badge"></span></div>
+          <p class="ep-instr"></p>
+        </div>
+        <div class="sf-stage">
+          <div class="sf-vid ep-vid">
+            <video muted playsinline preload="auto"></video>
+            <div class="sf-paused" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+          <div class="sf-side ep-side"><div class="ep-sidein">
+            <div class="sf-req">
+              <h5><b>Sent to the model</b></h5>
+              <div class="sf-reqrow">
+                <div class="sf-imgs"><button class="sf-img" type="button"><img alt="overview" decoding="async"></button><button class="sf-img" type="button"><img alt="left camera" decoding="async"></button><button class="sf-img" type="button"><img alt="right camera" decoding="async"></button></div>
+                <button class="sf-prompt" type="button">View the prompt</button>
+              </div>
+            </div>
+            <div class="sf-rep">
+              <h5><b>Reply</b></h5>
+              <div class="sf-prog"><span class="sf-lab">Progress</span><span class="sf-progt"></span></div>
+              <div class="sf-steph"><span class="sf-lab">Steps</span></div>
+              <ol class="ep-steps"></ol>
+            </div>
+          </div></div>
+        </div>
+        <div class="ep-tl" aria-label="Turns"><div class="ep-tlbar"></div><div class="ep-head-line"></div></div>
+        <div class="sf-ctl">
+          <button class="sf-icon ep-play" type="button" aria-label="Play"></button>
+          <span class="sf-turns">
+            <button class="sf-icon ep-prev" type="button" aria-label="Previous turn"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+            <span class="ep-turnnum"></span>
+            <button class="sf-icon ep-next" type="button" aria-label="Next turn"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+          </span>
+          <span class="ep-foot">one frame per executed step</span>
+          <span class="sf-seg" role="group" aria-label="Speed">
+            <button type="button" data-rate="0.5" aria-pressed="false">0.5×</button><button type="button" data-rate="1" aria-pressed="true">1×</button><button type="button" data-rate="2" aria-pressed="false">2×</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="ep-pick"><b>Choose an episode</b><span class="ep-key"><span><i class="ep-k ok"></i>success</span><span><i class="ep-k"></i>failure</span></span></div>
+      <div class="ep-grid" aria-label="Episodes by task"></div>
+    </div>
+  </section>
+</main>
+
+<div class="sf-lb" hidden><div class="sf-lbin" role="dialog" aria-modal="true"><button class="sf-x" type="button" aria-label="Close">×</button><div class="ep-lbbody"></div></div></div>
+
+<footer>
+  <div class="wrap"><p><a href="../">nanoAstra</a> · A Glimpse of Training VLMs as Foundation Models for Robotic Manipulation</p></div>
+</footer>
+
+<script type="application/json" id="ep-index">{"adjust_bottle":"0100000000","beat_block_hammer":"1000000000","blocks_ranking_rgb":"0100000000","blocks_ranking_size":"0000000000","click_alarmclock":"1101111111","click_bell":"1111111101","dump_bin_bigbin":"0000000000","grab_roller":"0000000101","handover_block":"0000000000","handover_mic":"0001000000","hanging_mug":"0000000000","lift_pot":"0000000000","move_can_pot":"0000010000","move_pillbottle_pad":"0010100000","move_playingcard_away":"0000010001","move_stapler_pad":"0000000000","open_laptop":"0000000101","open_microwave":"0100100001","pick_diverse_bottles":"0000000000","pick_dual_bottles":"0000000000","place_a2b_left":"0110000010","place_a2b_right":"1000101010","place_bread_basket":"0000000000","place_bread_skillet":"1000000000","place_burger_fries":"0000000000","place_can_basket":"0001000000","place_cans_plasticbox":"0000110010","place_container_plate":"1000100110","place_dual_shoes":"0000000000","place_empty_cup":"1000100000","place_fan":"0000000000","place_mouse_pad":"0000001000","place_object_basket":"0000000000","place_object_scale":"1000000100","place_object_stand":"0000-01000","place_phone_stand":"1000000000","place_shoe":"0000000000","press_stapler":"1111111111","put_bottles_dustbin":"0000000000","put_object_cabinet":"0000000000","rotate_qrcode":"0001000000","scan_object":"0000000000","shake_bottle":"1111101110","shake_bottle_horizontally":"0111111011","stack_blocks_three":"0000000000","stack_blocks_two":"0000000000","stack_bowls_three":"0000000000","stack_bowls_two":"0000000000","stamp_seal":"0000000000","turn_switch":"1000111100"}</script>
+<script src="../static/episodes.js?v=5"></script>
+</body>
+</html>
